@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AXON..</title>
+<meta name="description" content="AXON is a motion research studio: an open logbook of real-time rendering studies in particles, fluids and signed surfaces.">
+<style>
+:root{--accent:#aa88ff;--text:#ddd;--muted:#8a8a8a;--chip:#1c1c1c;--line:#2a2a2a}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#000;color:var(--text);font:13px/1.35 "SF Mono","Menlo","Consolas","Liberation Mono",monospace;text-transform:uppercase;letter-spacing:.02em}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+.ui{position:fixed;inset:0;z-index:1;pointer-events:none}
+.brand,.tags,.about,.counter{mix-blend-mode:plus-lighter}
+.brand{position:absolute;top:24px;left:24px;display:flex;gap:14px;align-items:center}
+.brand b{display:block;font-weight:400;font-size:20px;color:#fff}
+.brand small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.counter{position:absolute;top:24px;right:24px;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:#0a0a0a;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.tags{position:absolute;top:120px;left:24px;width:320px;display:flex;flex-wrap:wrap;gap:6px}
+.tags span{background:var(--chip);padding:5px 9px;font-size:11px;color:#cfcfcf}
+.tags span.on{background:#e6e6e6;color:#000}
+.list{position:absolute;top:250px;left:24px;bottom:0;width:320px;overflow-y:auto;scrollbar-width:none;pointer-events:auto}
+.list::-webkit-scrollbar{display:none}
+.card{padding:18px 0;border-top:1px solid var(--line)}
+.thumb{height:160px;border-radius:2px;background:#0a0a0a;overflow:hidden}
+.thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.meta{display:flex;justify-content:space-between;gap:16px;margin-top:10px;font-size:12px;white-space:pre-line}
+.meta div:first-child{color:#fff}.meta div:last-child{color:var(--muted);text-align:right}
+.about{position:absolute;right:90px;top:50%;transform:translateY(-50%);width:380px}
+.about section+section{margin-top:2.2em}
+.about h2{font-size:13px;font-weight:400;color:var(--accent);margin-bottom:1em}
+.about p{text-align:justify;margin-bottom:1em}
+.about ul{list-style:inside}
+.about a{display:block;color:inherit;text-decoration:underline;margin:4px 0;pointer-events:auto;transition:opacity .3s}
+.about a:hover{opacity:.7}
+.about button{display:block;background:none;border:0;color:inherit;font:inherit;letter-spacing:inherit;text-transform:uppercase;text-decoration:underline;margin:4px 0;padding:0;cursor:pointer;pointer-events:auto;transition:opacity .3s}.about button:hover{opacity:.7}
+@media(max-width:1100px){.about{right:24px;width:320px}}
+@media(max-width:760px){.list,.tags{display:none}.about{left:24px;right:24px;bottom:24px;top:auto;width:auto;transform:none}.about p{text-align:left}}
+</style></head><body>
+<canvas id="bg"></canvas>
+<div class="ui">
+<div class="brand"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18.5" fill="none" stroke="#fff" stroke-width="1.6"/><polygon id="star" fill="#fff"/></svg><div><b>AXON</b><small>Motion research</small></div></div>
+<div class="counter">07</div>
+<div class="tags" id="tags"></div>
+<div class="list" id="list"></div>
+<div class="about">
+<section><h2>[info]</h2><p>Studies are published as they are built and may not run on every device.</p></section>
+<section><h2>[aims]</h2><p>An open logbook of real-time rendering research: surfaces, fluids, fields, and the little tools we build to shape them.</p><p>It is here to keep the work in view and to give each new project a place to grow.</p></section>
+<section><h2>[exploring]</h2><ul><li>Signed surfaces</li><li>Cursor turbulence</li><li>Compute passes</li><li>Type in 3D space</li></ul></section>
+<section><h2>[connect]</h2><a href="#">Index -&gt; AXON</a><a href="mailto:hello@axonlab.dev">Mail -&gt; hello@axonlab.dev</a><button id="cp" type="button">Copy email</button></section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+<script>
+// ---- UI ----
+(function(){var b=document.getElementById("cp"),E="hello@axonlab.dev",t;function ok(){b.textContent="Copied";clearTimeout(t);t=setTimeout(function(){b.textContent="Copy email"},1500)}
+function fb(){var a=document.createElement("textarea");a.value=E;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();try{document.execCommand("copy");ok()}catch(e){}document.body.removeChild(a)}
+b.addEventListener("click",function(){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(E).then(ok,fb)}else fb()})})();
+(function(){
+var pts=[];for(var i=0;i<16;i++){var r=i%2?2.8:7,a=i*Math.PI/8-Math.PI/2;pts.push((20+r*Math.cos(a)).toFixed(2)+","+(20+r*Math.sin(a)).toFixed(2))}
+document.getElementById("star").setAttribute("points",pts.join(" "));
+"All,Light,Physics,Fluids,Grid,Audio,Volumes,Particles,Capture,Render".split(",").forEach(function(t,i){var s=document.createElement("span");s.textContent=t;if(!i)s.className="on";document.getElementById("tags").appendChild(s)});
+var B="https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/";
+[["oraciteslArea.mp4","Lattices / zone\nAmbient light / study".split("\n"),["Lattices / zone","Ambient light / study"]],
+["facet-glass-hero.mp4",["Prism / shell","Dispersion hero / render"]],
+["stellarmind-hero.mp4",["Nebular / loop","Procedural hero / sequence"]],
+["thedropthroughArea.mp4",["Fall / forward","Dolly track / study"]]].forEach(function(c,i){
+var names=[["Lattices / zone","Ambient light / study"],["Prism / shell","Dispersion hero / render"],["Nebular / loop","Procedural hero / sequence"],["Fall / forward","Dolly track / study"]][i];
+var d=document.createElement("div");d.className="card";
+d.innerHTML='<div class="thumb"></div><div class="meta"><div></div><div></div></div>';
+var m=d.querySelectorAll(".meta div");m[0].textContent=names[0];m[1].textContent=names[1];
+var v=document.createElement("video");v.src=B+c[0];v.autoplay=v.loop=v.muted=v.playsInline=true;v.setAttribute("muted","");v.setAttribute("playsinline","");v.preload="metadata";
+d.firstChild.appendChild(v);document.getElementById("list").appendChild(d);var p=v.play();if(p&&p.catch)p.catch(function(){});
+});
+})();
+// ---- WebGL ----
+(function(){
+var mobile=innerWidth<=760||/Mobi|Android/i.test(navigator.userAgent);
+var W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2);
+var R=new THREE.WebGLRenderer({canvas:document.getElementById("bg"),antialias:false});
+R.setPixelRatio(DPR);R.setSize(W,H);R.setClearColor(0x000000,1);
+var VS="varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}";
+var quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2)),fs=new THREE.Scene();fs.add(quad);
+var fcam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+function pass(m,t){quad.material=m;R.setRenderTarget(t);R.render(fs,fcam)}
+function mk(f,u){return new THREE.ShaderMaterial({vertexShader:VS,fragmentShader:f,uniforms:u,depthTest:false,depthWrite:false})}
+function rt(w,h,type,flt){return new THREE.WebGLRenderTarget(w,h,{type:type,format:THREE.RGBAFormat,minFilter:flt,magFilter:flt,depthBuffer:false})}
+var HT=THREE.HalfFloatType,L=THREE.LinearFilter,N=THREE.NearestFilter;
+function dbl(w,h,type,f){var o={read:rt(w,h,type,f),write:rt(w,h,type,f),swap:function(){var t=this.read;this.read=this.write;this.write=t}};return o}
+// ---- fluid ----
+var SR=256,DR=512,vel=dbl(SR,SR,HT,L),den=dbl(DR,DR,HT,L),prs=dbl(SR,SR,HT,N),crl=rt(SR,SR,HT,N),dvg=rt(SR,SR,HT,N);
+var mask=rt(W,H,HT,L);
+var T2=new THREE.Vector2(1/SR,1/SR),H0="varying vec2 vUv;uniform vec2 texel;uniform sampler2D uT;";
+var NB="vec2 vL=vUv-vec2(texel.x,0.),vR=vUv+vec2(texel.x,0.),vT=vUv+vec2(0.,texel.y),vB=vUv-vec2(0.,texel.y);";
+var splat=mk("varying vec2 vUv;uniform sampler2D uT;uniform float uAsp,uSig;uniform vec2 uA,uB;uniform vec3 uC;void main(){vec2 asp=vec2(uAsp,1.);vec2 pa=(vUv-uA)*asp,ba=(uB-uA)*asp;float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-6),0.,1.);vec2 d=pa-ba*h;gl_FragColor=vec4(texture2D(uT,vUv).rgb+exp(-dot(d,d)/(uSig*uSig))*uC,1.);}",{uT:{value:null},uAsp:{value:1},uSig:{value:.01},uA:{value:new THREE.Vector2},uB:{value:new THREE.Vector2},uC:{value:new THREE.Vector3}});
+var advect=mk(H0+"uniform sampler2D uS;uniform float uDt,uDis;void main(){vec2 c=vUv-uDt*texture2D(uT,vUv).xy*texel;gl_FragColor=texture2D(uS,c)*uDis;}",{uT:{value:null},uS:{value:null},texel:{value:T2},uDt:{value:1/60},uDis:{value:1}});
+var curl=mk(H0+NB+"void main(){float l=texture2D(uT,vL).y,r=texture2D(uT,vR).y,t=texture2D(uT,vT).x,b=texture2D(uT,vB).x;gl_FragColor=vec4(.5*(r-l-t+b),0.,0.,1.);}",{uT:{value:null},texel:{value:T2}});
+var vort=mk(H0+NB+"uniform sampler2D uV;uniform float uCurl,uDt;void main(){float l=texture2D(uT,vL).x,r=texture2D(uT,vR).x,t=texture2D(uT,vT).x,b=texture2D(uT,vB).x,c=texture2D(uT,vUv).x;vec2 f=.5*vec2(abs(t)-abs(b),abs(r)-abs(l));f/=length(f)+1e-4;f*=uCurl*c;f.y*=-1.;vec2 v=texture2D(uV,vUv).xy+f*uDt;gl_FragColor=vec4(clamp(v,-1000.,1000.),0.,1.);}",{uT:{value:null},uV:{value:null},texel:{value:T2},uCurl:{value:30},uDt:{value:1/60}});
+var div=mk(H0+NB+"void main(){float l=texture2D(uT,vL).x,r=texture2D(uT,vR).x,t=texture2D(uT,vT).y,b=texture2D(uT,vB).y;gl_FragColor=vec4(.5*(r-l+t-b),0.,0.,1.);}",{uT:{value:null},texel:{value:T2}});
+var clr=mk(H0+"uniform float uK;void main(){gl_FragColor=uK*texture2D(uT,vUv);}",{uT:{value:null},texel:{value:T2},uK:{value:.95}});
+var prm=mk(H0+NB+"uniform sampler2D uD;void main(){float l=texture2D(uT,vL).x,r=texture2D(uT,vR).x,t=texture2D(uT,vT).x,b=texture2D(uT,vB).x;gl_FragColor=vec4((l+r+b+t-texture2D(uD,vUv).x)*.25,0.,0.,1.);}",{uT:{value:null},uD:{value:null},texel:{value:T2}});
+var grad=mk(H0+NB+"uniform sampler2D uP;void main(){float l=texture2D(uP,vL).x,r=texture2D(uP,vR).x,t=texture2D(uP,vT).x,b=texture2D(uP,vB).x;vec2 v=texture2D(uT,vUv).xy-vec2(r-l,t-b)*.5;gl_FragColor=vec4(v,0.,1.);}",{uT:{value:null},uP:{value:null},texel:{value:T2}});
+var disp=mk("varying vec2 vUv;uniform sampler2D uT;void main(){vec3 c=min(texture2D(uT,vUv).rgb,1.);gl_FragColor=vec4(c,max(c.r,max(c.g,c.b)));}",{uT:{value:null}});
+function doSplat(f,a,b,col,sig){var u=splat.uniforms;u.uT.value=f.read.texture;u.uA.value.copy(a);u.uB.value.copy(b);u.uC.value.copy(col);u.uSig.value=Math.max(sig,.002);u.uAsp.value=W/H;pass(splat,f.write);f.swap()}
+function fluidStep(){
+var dt=1/60;
+curl.uniforms.uT.value=vel.read.texture;pass(curl,crl);
+vort.uniforms.uT.value=crl.texture;vort.uniforms.uV.value=vel.read.texture;pass(vort,vel.write);vel.swap();
+div.uniforms.uT.value=vel.read.texture;pass(div,dvg);
+clr.uniforms.uT.value=prs.read.texture;pass(clr,prs.write);prs.swap();
+prm.uniforms.uD.value=dvg.texture;
+for(var i=0;i<5;i++){prm.uniforms.uT.value=prs.read.texture;pass(prm,prs.write);prs.swap()}
+grad.uniforms.uT.value=vel.read.texture;grad.uniforms.uP.value=prs.read.texture;pass(grad,vel.write);vel.swap();
+advect.uniforms.uT.value=vel.read.texture;advect.uniforms.uS.value=vel.read.texture;advect.uniforms.uDis.value=.98;pass(advect,vel.write);vel.swap();
+advect.uniforms.uT.value=vel.read.texture;advect.uniforms.uS.value=den.read.texture;advect.uniforms.uDis.value=.97;pass(advect,den.write);den.swap();
+disp.uniforms.uT.value=den.read.texture;pass(disp,mask);
+}
+// ---- mouse ----
+var mx=W/2,my=H/2,pmx=mx,pmy=my,lastSplat=0;
+function setM(x,y){mx=x;my=y}
+addEventListener("mousemove",function(e){setM(e.clientX,e.clientY)});
+function tch(e){if(e.touches[0])setM(e.touches[0].clientX,e.touches[0].clientY)}
+addEventListener("touchstart",tch,{passive:true});addEventListener("touchmove",tch,{passive:true});
+function cm(v,a,b,c,d){return c+(d-c)*Math.min(Math.max((v-a)/(b-a),0),1)}
+function mouseSplat(now){
+var dx=mx-pmx,dy=my-pmy,len=Math.hypot(dx,dy);
+if(len>.01){
+var rad=cm(len,0,5,0,60)*.6*(mobile?.8:1),mult=cm(len,0,15,0,10);
+var b=new THREE.Vector2(mx/W,1-my/H),a=now-lastSplat>50?b.clone():new THREE.Vector2(pmx/W,1-pmy/H);
+doSplat(vel,a,b,new THREE.Vector3(dx*mult,-dy*mult,1),rad/200);
+doSplat(den,a,b,new THREE.Vector3(1,1,1),rad/200);
+lastSplat=now}
+pmx=mx;pmy=my}
+// ---- particles ----
+var S=mobile?128:512,NP=S*S;
+var od=new Float32Array(NP*4);for(var i=0;i<NP;i++){od[i*4]=Math.random()*2-1;od[i*4+1]=Math.random()*2-1;od[i*4+2]=Math.random()*2-1;od[i*4+3]=1}
+var origin=new THREE.DataTexture(od,S,S,THREE.RGBAFormat,THREE.FloatType);origin.needsUpdate=true;origin.minFilter=origin.magFilter=N;
+var pp=dbl(S,S,THREE.FloatType,N);
+var camera=new THREE.PerspectiveCamera(30,W/H,.1,1000),base=new THREE.Vector3(-1.17,0,6),tgt=base.clone();
+camera.position.copy(base);
+var scene=new THREE.Scene(),group=new THREE.Group();scene.add(group);
+group.position.set(.343,.16,-1);var D=Math.PI/180;group.rotation.set(-28.4*D,390*D,4.92*D);group.scale.set(5,5,6);
+var simFS=[
+"varying vec2 vUv;uniform sampler2D uPos,uOrg,uVel,uDen;uniform float uTime,uHZ;uniform mat4 uProj,uModel;uniform mat3 uCam;",
+"vec3 curlN(vec3 p){float a=2.1*cos(2.1*p.y+1.3*p.z),b=1.3*cos(2.1*p.y+1.3*p.z)+3.7*cos(3.7*p.z);",
+"float c=2.9*cos(2.9*p.z+1.7*p.x),d=1.7*cos(2.9*p.z+1.7*p.x)+3.1*cos(3.1*p.x);",
+"float e=2.3*cos(2.3*p.x+1.1*p.y),f=1.1*cos(2.3*p.x+1.1*p.y)+3.3*cos(3.3*p.y);",
+"return normalize(vec3(f-c,b-e,d-a));}",
+"float sdf(vec3 p){p.z=sqrt(p.z*p.z+.0215)-sqrt(.012);",
+"if(length(p)>.8)return length(p)-.7;",
+"float a=p.z*3.;p.xy=mat2(cos(a),-sin(a),sin(a),cos(a))*p.xy;p.x+=.05*sin(p.y*8.+1.);p.y+=.03*sin(p.x*6.);",
+"float g=atan(p.y,p.x);float Rr=.24+.04*sin(g*3.+1.);",
+"vec2 q=vec2(length(p.xy)-Rr,p.z-.0366);return (length(q)-.085-.025*sin(g*2.+p.z*5.))*.7;}",
+"vec3 sn(vec3 p){vec2 e=vec2(.001,0.);return vec3(sdf(p+e.xyy)-sdf(p-e.xyy),sdf(p+e.yxy)-sdf(p-e.yxy),sdf(p+e.yyx)-sdf(p-e.yyx))/.002;}",
+"void main(){vec3 pos=texture2D(uPos,vUv).xyz;vec3 org=texture2D(uOrg,vUv).xyz;",
+"if(length(pos)>.7)pos/=2.;",
+"pos+=curlN(pos*.1+uTime*.05)*.0002*uHZ;",
+"vec3 g=sn(pos);float s=sdf(pos);",
+"pos+=cross(normalize(pos),normalize(g))*.0005;",
+"pos+=-g*s*.5;",
+"pos+=(org-pos)*.0002*uHZ;",
+"vec4 c=uProj*uModel*vec4(pos,1.);vec2 uv=c.xy/c.w*.5+.5;",
+"vec3 flow=uCam*vec3(texture2D(uVel,uv).xy,0.);",
+"pos+=flow*.0001*uHZ*.4*texture2D(uDen,uv).r;",
+"gl_FragColor=vec4(pos,1.);}"].join("\n");
+var sim=mk(simFS,{uPos:{value:origin},uOrg:{value:origin},uVel:{value:null},uDen:{value:null},uTime:{value:0},uHZ:{value:1},uProj:{value:new THREE.Matrix4},uModel:{value:new THREE.Matrix4},uCam:{value:new THREE.Matrix3}});
+// matcap
+var mc=document.createElement("canvas");mc.width=mc.height=64;var cx=mc.getContext("2d"),gr=cx.createRadialGradient(24,22,2,32,32,32);
+gr.addColorStop(0,"#f2f2f2");gr.addColorStop(.6,"#8a8a8a");gr.addColorStop(1,"#303030");cx.fillStyle=gr;cx.fillRect(0,0,64,64);
+var matcap=new THREE.Texture(mc);matcap.needsUpdate=true;
+var geo=new THREE.BufferGeometry(),pos=new Float32Array(NP*3),rnd=new Float32Array(NP*4);
+for(var i=0;i<NP;i++){pos[i*3]=(i%S+.5)/S;pos[i*3+1]=(Math.floor(i/S)+.5)/S}
+for(var i=0;i<NP*4;i++)rnd[i]=Math.random();
+geo.setAttribute("position",new THREE.BufferAttribute(pos,3));geo.setAttribute("random",new THREE.BufferAttribute(rnd,4));
+var pm=new THREE.ShaderMaterial({transparent:true,blending:THREE.AdditiveBlending,depthTest:true,depthWrite:false,
+uniforms:{uPos:{value:null},uTime:{value:0},uDPR:{value:DPR},uMat:{value:matcap}},
+vertexShader:"attribute vec4 random;uniform sampler2D uPos;uniform float uDPR;varying vec4 vR;varying float vS;void main(){vR=random;vec3 p=texture2D(uPos,position.xy).xyz;p*=mix(1.,1.5,pow(random.y,150.));vec4 mv=modelViewMatrix*vec4(p,1.);float d=length(mv.xyz);vS=smoothstep(3.,15.,d)*mix(.5,1.,random.z);gl_PointSize=.04*uDPR*2.*vS*(1000./d);gl_Position=projectionMatrix*mv;}",
+fragmentShader:"uniform sampler2D uMat;uniform float uTime;varying vec4 vR;varying float vS;"+
+"vec3 soft(vec3 b,vec3 s){return mix(2.*b*s+b*b*(1.-2.*s),sqrt(b)*(2.*s-1.)+2.*b*(1.-s),step(.5,s));}"+
+"vec3 ovl(vec3 b,vec3 s){return mix(2.*b*s,1.-2.*(1.-b)*(1.-s),step(.5,b));}"+
+"void main(){vec2 u=gl_PointCoord-.5;if(length(u)>.5)discard;if(vS<.1)discard;"+
+"vec3 col=mix(vec3(mix(0.,.2,vR.x)),vec3(.6,.45,1.),pow(vR.z,100.));"+
+"col*=.5+(.4+sin(uTime*4.+vR.y*20.))*pow(vR.z,10.)*2.5;"+
+"float a=sin(uTime+vR.z*20.)*.5+1.;u=mat2(cos(a),-sin(a),sin(a),cos(a))*u;"+
+"vec3 m=texture2D(uMat,u+.5).rgb;col=mix(col,soft(col,m),.8);col=mix(col,ovl(col,m),.2);gl_FragColor=vec4(col*2.2,1.);}"});
+var pts=new THREE.Points(geo,pm);pts.frustumCulled=false;group.add(pts);
+// ---- loop ----
+var clock=new THREE.Clock(),time=0,first=true;
+function frame(){
+requestAnimationFrame(frame);
+var dts=Math.min(clock.getDelta(),.05);time+=dts;var now=performance.now();
+mouseSplat(now);fluidStep();
+tgt.set(base.x+(mx/W*2-1)*-1,base.y+(my/H*2-1)*2,base.z);
+camera.position.lerp(tgt,.05);camera.lookAt(0,0,0);camera.updateMatrixWorld();group.updateMatrixWorld();
+var u=sim.uniforms;u.uPos.value=first?origin:pp.read.texture;first=false;
+u.uVel.value=vel.read.texture;u.uDen.value=mask.texture;u.uTime.value=time;u.uHZ.value=dts*60;
+u.uProj.value.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
+u.uModel.value.copy(group.matrixWorld);u.uCam.value.setFromMatrix4(camera.matrixWorld);
+pass(sim,pp.write);pp.swap();
+pm.uniforms.uPos.value=pp.read.texture;pm.uniforms.uTime.value=time;
+R.setRenderTarget(null);R.render(scene,camera);
+}
+addEventListener("resize",function(){W=innerWidth;H=innerHeight;R.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();mask.setSize(W,H)});
+frame();
+})();
+</script></body></html>
